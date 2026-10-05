@@ -4,6 +4,7 @@ const items = [
   { id: "biz", href: "#/biz", label: "کسب‌وکارها" },
   { id: "publish", href: "#/publish", label: "انتشار" },
   { id: "members", href: "#/members", label: "اعضا" },
+  { id: "sms", href: "#/sms", label: "پیامک" },
   { id: "out", href: "#/logout", label: "خروج", out: true },
 ];
 
@@ -55,6 +56,11 @@ async function render() {
   const ed = path.match(/^\/members-edit\/(.+)$/);
   if (ed) return viewMemberForm(ed[1]);
   if (path === "/members") return viewMembers();
+  if (path === "/sms-new") return viewSmsForm(null);
+  const se = path.match(/^\/sms-edit\/(.+)$/);
+  if (se) return viewSmsForm(se[1]);
+  if (path === "/sms-routes") return viewSmsRoutes();
+  if (path === "/sms") return viewSms();
   return viewHome(me, list);
 }
 
@@ -371,6 +377,193 @@ async function viewMemberForm(id) {
       qs("#m").className = "err";
       qs("#m").textContent = err.message || String(err);
     }
+  };
+}
+
+const SMS_VENDORS = [
+  { id: "kavenegar", label: "کاوه نگار", hint: "از پنل: کلید API و شماره خط." },
+  { id: "melipayamak", label: "ملی پیامک", hint: "از پنل: نام کاربری، رمز، شماره خط. برای رمز یک‌بارمصرف کد پترن." },
+  { id: "smsir", label: "SMS.ir", hint: "از پنل: کلید API و شماره خط. قالب تأیید اختیاری است." },
+  { id: "farazsms", label: "فراز اس‌ام‌اس", hint: "از پنل: نام کاربری، رمز، خط، کد پترن." },
+  { id: "ghasedak", label: "قاصدک", hint: "از پنل: کلید API و شماره خط." },
+  { id: "magfa", label: "مگفا", hint: "از پنل: نام کاربری، رمز، خط و آدرس وب‌سرویس." },
+  { id: "payamresan", label: "پیام‌رسان", hint: "از پنل: نام کاربری، رمز و شماره خط." },
+  { id: "custom", label: "سایر سامانه‌ها", hint: "هر پنل دیگری: آدرس وب‌سرویس و همان چیزهایی که پنل به شما داده." },
+];
+const SMS_FIELDS = {
+  kavenegar: ["api_key", "sender"],
+  melipayamak: ["username", "password", "sender", "pattern_id"],
+  smsir: ["api_key", "sender", "pattern_id"],
+  farazsms: ["username", "password", "sender", "pattern_id"],
+  ghasedak: ["api_key", "sender"],
+  magfa: ["username", "password", "sender", "api_url"],
+  payamresan: ["username", "password", "sender"],
+  custom: ["api_url", "username", "password", "api_key", "sender", "pattern_id"],
+};
+const FIELD_LABEL = {
+  api_key: "کلید API",
+  username: "نام کاربری پنل",
+  password: "رمز پنل",
+  sender: "شماره خط ارسال",
+  pattern_id: "کد پترن / قالب (برای رمز یک‌بارمصرف)",
+  api_url: "آدرس وب‌سرویس",
+};
+const SMS_USES = [
+  { id: "otp_login", title: "ورود با موبایل", desc: "کد تأیید به شماره عضو" },
+  { id: "member_welcome", title: "عضو جدید", desc: "ارسال کاربری و رمز ساخته‌شده" },
+  { id: "password_reset", title: "بازیابی رمز", desc: "کد یا لینک بازیابی" },
+  { id: "shop_notify", title: "فروشگاه", desc: "اطلاع سفارش و موجودی" },
+  { id: "admin_alert", title: "هشدار مدیریت", desc: "پیام به مدیران شبکه" },
+];
+
+async function viewSms() {
+  const list = await petavuData.sms.list();
+  const rows = list.length
+    ? list
+        .map(
+          (g) => `<tr>
+            <td>${esc(g.name)}</td>
+            <td>${esc((SMS_VENDORS.find((v) => v.id === g.vendor) || {}).label || g.vendor)}</td>
+            <td>${g.enabled ? "فعال" : "خاموش"}</td>
+            <td dir="ltr">${esc(g.sender || "—")}</td>
+            <td><a class="btn" href="#/sms-edit/${g.id}">ویرایش</a></td>
+          </tr>`
+        )
+        .join("")
+    : `<tr><td colspan="5" class="muted">هنوز سامانه‌ای نیست. از «سامانهٔ جدید» اضافه کنید.</td></tr>`;
+  petavuChrome({
+    items, active: "sms", still: "assets/still-home.jpg",
+    kicker: "پیامک",
+    title: "سامانه‌های پیامک",
+    lead: "همان چیزهایی را وارد کنید که پنل ایرانی به شما می‌دهد. بعد مشخص کنید هر بخش سایت از کدام سامانه بفرستد.",
+    body: `<div class="toolbar">
+        <a class="btn" href="#/sms-new">سامانهٔ جدید</a>
+        <a class="btn" href="#/sms-routes">کدام بخش از کدام پنل</a>
+      </div>
+      <table>
+        <thead><tr><th>نام</th><th>سامانه</th><th>وضعیت</th><th>خط</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="muted">چند سامانه هم‌زمان مجاز است. ارسال واقعی وقتی موبایل فعال شود از همین تنظیمات خوانده می‌شود.</p>`,
+  });
+}
+
+async function viewSmsForm(id) {
+  const list = await petavuData.sms.list();
+  const g = (id && list.find((x) => x.id === id)) || {
+    id: crypto.randomUUID(),
+    name: "",
+    vendor: "kavenegar",
+    enabled: true,
+    api_url: "",
+    api_key: "",
+    username: "",
+    password: "",
+    sender: "",
+    pattern_id: "",
+    notes: "",
+  };
+  const creating = !id;
+  petavuChrome({
+    items, active: "sms", still: "assets/still-home.jpg",
+    kicker: creating ? "سامانهٔ جدید" : "ویرایش سامانه",
+    title: creating ? "افزودن پنل پیامک" : g.name || "ویرایش",
+    lead: "نوع سامانه را انتخاب کنید. فقط همان فیلدهایی که پنل‌تان داده پر شود.",
+    body: `<form class="stack" id="sf" style="max-width:640px">
+      <p class="sec">شناسه</p>
+      <input name="name" required placeholder="یک نام ساده — مثلاً کاوه‌نگار اصلی" value="${esc(g.name)}">
+      <select name="vendor" id="vendor">${SMS_VENDORS.map((v) => `<option value="${v.id}" ${v.id === g.vendor ? "selected" : ""}>${v.label}</option>`).join("")}</select>
+      <p class="muted" id="hint"></p>
+      <p class="sec">آنچه پنل در اختیارتان گذاشته</p>
+      <div id="fields"></div>
+      <label class="muted"><input type="checkbox" name="enabled" ${g.enabled ? "checked" : ""}> این سامانه روشن باشد</label>
+      <textarea name="notes" placeholder="یادداشت داخلی — اختیاری">${esc(g.notes || "")}</textarea>
+      <button class="btn" type="submit">ذخیره</button>
+      ${creating ? "" : `<button class="btn" type="button" id="del">حذف</button>`}
+      <p id="m" class="muted"></p>
+      <p><a href="#/sms">بازگشت</a></p>
+    </form>`,
+  });
+  const f = qs("#sf");
+  const fields = qs("#fields");
+  const hint = qs("#hint");
+  const draw = () => {
+    const v = f.vendor.value;
+    const spec = SMS_VENDORS.find((x) => x.id === v);
+    hint.textContent = spec ? spec.hint : "";
+    fields.innerHTML = SMS_FIELDS[v]
+      .map((k) => {
+        const type = k === "password" ? "password" : "text";
+        return `<input name="${k}" type="${type}" placeholder="${FIELD_LABEL[k]}" dir="ltr" value="${esc(g[k] || "")}">`;
+      })
+      .join("");
+  };
+  f.vendor.onchange = draw;
+  draw();
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(f);
+    const row = {
+      ...g,
+      name: String(fd.get("name")).trim(),
+      vendor: String(fd.get("vendor")),
+      enabled: !!f.enabled.checked,
+      notes: String(fd.get("notes") || ""),
+      api_url: String(fd.get("api_url") || ""),
+      api_key: String(fd.get("api_key") || ""),
+      username: String(fd.get("username") || ""),
+      password: String(fd.get("password") || ""),
+      sender: String(fd.get("sender") || ""),
+      pattern_id: String(fd.get("pattern_id") || ""),
+      created_at: g.created_at || new Date().toISOString(),
+    };
+    await petavuData.sms.put(row);
+    qs("#m").className = "ok";
+    qs("#m").textContent = "ذخیره شد. از «کدام بخش از کدام پنل» مسیر ارسال را مشخص کنید.";
+  };
+  const del = qs("#del");
+  if (del) {
+    del.onclick = async () => {
+      await petavuData.sms.remove(g.id);
+      location.hash = "#/sms";
+    };
+  }
+}
+
+async function viewSmsRoutes() {
+  const [list, routes] = await Promise.all([petavuData.sms.list(), petavuData.sms.routes()]);
+  const opts = `<option value="">— انتخاب سامانه —</option>` + list.filter((g) => g.enabled).map((g) => `<option value="${g.id}">${esc(g.name)}</option>`).join("");
+  petavuChrome({
+    items, active: "sms", still: "assets/still-home.jpg",
+    kicker: "مسیر ارسال",
+    title: "هر بخش از کدام پنل",
+    lead: "اگر چند سامانه دارید، برای هر کار یکی را انتخاب کنید. خالی یعنی هنوز پیامک نرود.",
+    body: `<form class="stack" id="rf" style="max-width:640px">
+      ${SMS_USES.map(
+        (u) => `<div class="card">
+          <b>${u.title}</b>
+          <p class="muted">${u.desc}</p>
+          <select name="${u.id}">${opts}</select>
+        </div>`
+      ).join("")}
+      <button class="btn" type="submit">ذخیرهٔ مسیرها</button>
+      <p id="m" class="muted"></p>
+      <p><a href="#/sms">بازگشت به سامانه‌ها</a></p>
+    </form>`,
+  });
+  const f = qs("#rf");
+  SMS_USES.forEach((u) => {
+    if (routes[u.id] && f[u.id]) f[u.id].value = routes[u.id];
+  });
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const obj = {};
+    SMS_USES.forEach((u) => {
+      obj[u.id] = f[u.id].value;
+    });
+    await petavuData.sms.setRoutes(obj);
+    qs("#m").className = "ok";
+    qs("#m").textContent = "مسیرها ذخیره شد.";
   };
 }
 

@@ -66,5 +66,56 @@
         sb.from("products").select("id,name,price_irr,published,businesses(name,slug)").eq("published", true),
       all: () => sb.from("products").select("id,name,price_irr,published,businesses(name)"),
     },
+    sms: {
+      async list() {
+        const { data, error } = await sb.from("sms_gateways").select("*").order("created_at", { ascending: false });
+        if (!error && Array.isArray(data)) {
+          localStorage.setItem("petavu-v1-sms", JSON.stringify(data));
+          return data;
+        }
+        try {
+          return JSON.parse(localStorage.getItem("petavu-v1-sms") || "[]");
+        } catch {
+          return [];
+        }
+      },
+      async put(row) {
+        const list = await global.petavuData.sms.list();
+        const i = list.findIndex((x) => x.id === row.id);
+        if (i >= 0) list[i] = row;
+        else list.unshift(row);
+        localStorage.setItem("petavu-v1-sms", JSON.stringify(list));
+        await sb.from("sms_gateways").upsert(row);
+        return list;
+      },
+      async remove(id) {
+        const list = (await global.petavuData.sms.list()).filter((x) => x.id !== id);
+        localStorage.setItem("petavu-v1-sms", JSON.stringify(list));
+        await sb.from("sms_gateways").delete().eq("id", id);
+        return list;
+      },
+      async routes() {
+        const { data, error } = await sb.from("sms_routes").select("*");
+        if (!error && Array.isArray(data)) {
+          const o = {};
+          data.forEach((r) => {
+            o[r.feature] = r.gateway_id;
+          });
+          localStorage.setItem("petavu-v1-sms-routes", JSON.stringify(o));
+          return o;
+        }
+        try {
+          return JSON.parse(localStorage.getItem("petavu-v1-sms-routes") || "{}");
+        } catch {
+          return {};
+        }
+      },
+      async setRoutes(obj) {
+        localStorage.setItem("petavu-v1-sms-routes", JSON.stringify(obj));
+        const rows = Object.keys(obj).map((feature) => ({ feature, gateway_id: obj[feature] || null }));
+        if (rows.length) await sb.from("sms_routes").upsert(rows);
+        return obj;
+      },
+    },
   };
 })(window);
