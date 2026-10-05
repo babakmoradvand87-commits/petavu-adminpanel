@@ -18,6 +18,24 @@
       signIn: (email, password) => sb.auth.signInWithPassword({ email, password }),
       signUp: (email, password) => sb.auth.signUp({ email, password }),
       signOut: () => sb.auth.signOut(),
+      updatePassword: (password) => sb.auth.updateUser({ password }),
+      setMeta: (data) => sb.auth.updateUser({ data }),
+      createMemberAccount: async ({ email, password, meta }) => {
+        const { data: cur } = await sb.auth.getSession();
+        const saved = cur.session;
+        const res = await sb.auth.signUp({
+          email,
+          password,
+          options: { data: meta || {} },
+        });
+        if (saved?.access_token && saved?.refresh_token) {
+          await sb.auth.setSession({
+            access_token: saved.access_token,
+            refresh_token: saved.refresh_token,
+          });
+        }
+        return res;
+      },
     },
     profile: {
       me: async () => {
@@ -27,7 +45,13 @@
         if (error) throw error;
         return data;
       },
-      all: () => sb.from("profiles").select("id,email,display_name,role,created_at").order("created_at", { ascending: false }),
+      all: () => sb.from("profiles").select("*").order("created_at", { ascending: false }),
+      update: (id, row) => sb.from("profiles").update(row).eq("id", id),
+      upsert: (row) => sb.from("profiles").upsert(row),
+    },
+    groups: {
+      all: () => sb.from("member_groups").select("*").order("name"),
+      add: (name) => sb.from("member_groups").insert({ name }),
     },
     businesses: {
       published: () => sb.from("businesses").select("*").eq("published", true).order("created_at", { ascending: false }),

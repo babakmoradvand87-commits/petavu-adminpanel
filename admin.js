@@ -51,6 +51,9 @@ async function render() {
   const list = data || [];
   if (path === "/biz") return viewBiz(list);
   if (path === "/publish") return viewPublish(list);
+  if (path === "/members-new") return viewMemberForm(null);
+  const ed = path.match(/^\/members-edit\/(.+)$/);
+  if (ed) return viewMemberForm(ed[1]);
   if (path === "/members") return viewMembers();
   return viewHome(me, list);
 }
@@ -144,25 +147,220 @@ function viewPublish(list) {
   });
 }
 
+function genPass() {
+  const a = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const b = crypto.getRandomValues(new Uint8Array(12));
+  let s = "Pv";
+  for (const x of b) s += a[x % a.length];
+  return s;
+}
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function loadMemberRows() {
+  const [{ data: people, error }, { data: biz }] = await Promise.all([
+    petavuData.profile.all(),
+    petavuData.businesses.all(),
+  ]);
+  if (error) throw error;
+  const byOwner = {};
+  (biz || []).forEach((b) => {
+    (byOwner[b.owner_id] ||= []).push(b);
+  });
+  return (people || []).map((p) => ({
+    ...p,
+    company: p.company_name || (byOwner[p.id] || []).map((b) => b.name).join("، "),
+  }));
+}
+
 async function viewMembers() {
-  let rows = `<p class="muted">فهرست اعضا در دسترس نیست.</p>`;
+  let all = [];
+  let err = "";
   try {
-    const { data, error } = await petavuData.profile.all();
-    if (!error && data) {
-      rows = `<table><thead><tr><th>نام</th><th>ایمیل</th><th>نقش</th></tr></thead><tbody>${data
-        .map((p) => `<tr><td>${p.display_name || "—"}</td><td dir="ltr">${p.email || ""}</td><td>${p.role}</td></tr>`)
-        .join("")}</tbody></table>`;
-    }
+    all = await loadMemberRows();
   } catch (e) {
-    rows = `<p class="err">${e.message || e}</p>`;
+    err = e.message || String(e);
   }
+  const body = err
+    ? `<p class="err">${esc(err)}</p>`
+    : `<div class="toolbar">
+        <input type="search" id="q" placeholder="جستجو: نام، شرکت، فروشگاه، گروه، موبایل">
+        <a class="btn" href="#/members-new">عضو جدید</a>
+      </div>
+      <p class="muted">ورود فعلی با ایمیل و رمز است. موبایل برای فعال‌سازی بعدی پیامک ذخیره می‌شود.</p>
+      <table>
+        <thead><tr><th>نام</th><th>شرکت / فروشگاه</th><th>گروه</th><th>موبایل</th><th>کاربری</th><th></th></tr></thead>
+        <tbody id="tb">${memberRows(all)}</tbody>
+      </table>`;
   petavuChrome({
     items, active: "members", still: "assets/still-members.jpg",
     kicker: "اعضا",
-    title: "حساب‌های شبکه",
-    lead: "ورود اعضا از پنل کاربری است؛ اینجا فقط دید مدیریت است.",
-    body: rows,
+    title: "دفتر هویت شبکه",
+    lead: "ساخت عضو با هویت کامل. رمز پیش‌فرض را عضو در اولین ورود عوض می‌کند.",
+    body,
   });
+  const q = qs("#q");
+  const tb = qs("#tb");
+  if (q && tb) {
+    q.oninput = () => {
+      const s = q.value.trim();
+      tb.innerHTML = memberRows(all, s);
+    };
+  }
+}
+
+function memberRows(all, s) {
+  const q = (s || "").toLowerCase();
+  const rows = all.filter((p) => {
+    if (!q) return true;
+    const blob = [p.display_name, p.company, p.group_name, p.phone, p.username, p.email].join(" ").toLowerCase();
+    return blob.includes(q);
+  });
+  if (!rows.length) return `<tr><td colspan="6" class="muted">موردی نیست.</td></tr>`;
+  return rows
+    .map(
+      (p) => `<tr>
+        <td>${esc(p.display_name || "—")} ${p.must_change_password ? '<span class="badge">رمز اولیه</span>' : ""}</td>
+        <td>${esc(p.company || "—")}</td>
+        <td>${esc(p.group_name || "—")}</td>
+        <td dir="ltr">${esc(p.phone || "—")}</td>
+        <td dir="ltr">${esc(p.username || p.email || "")}</td>
+        <td><a class="btn" href="#/members-edit/${p.id}">ویرایش</a></td>
+      </tr>`
+    )
+    .join("");
+}
+
+async function viewMemberForm(id) {
+  let p = {
+    display_name: "",
+    national_id: "",
+    phone: "",
+    email: "",
+    company_name: "",
+    group_name: "",
+    username: "",
+    role: "member",
+  };
+  if (id) {
+    const { data } = await petavuData.profile.all();
+    p = (data || []).find((x) => x.id === id) || p;
+  }
+  const creating = !id;
+  petavuChrome({
+    items, active: "members", still: "assets/still-members.jpg",
+    kicker: creating ? "عضو جدید" : "ویرایش عضو",
+    title: creating ? "ثبت هویت و دسترسی" : p.display_name || "ویرایش",
+    lead: "هویت اجباری است. کاربری و رمز ساخته می‌شوند. بعداً ورود با موبایل و پیامک روی همین پرونده فعال می‌شود.",
+    body: `<form class="stack" id="mf" style="max-width:640px">
+      <p class="sec">هویت</p>
+      <div class="row-2">
+        <input name="display_name" required placeholder="نام و نام خانوادگی" value="${esc(p.display_name)}">
+        <input name="national_id" required placeholder="کد ملی" value="${esc(p.national_id)}">
+      </div>
+      <div class="row-2">
+        <input name="phone" required placeholder="موبایل — کلید ورود پیامک" dir="ltr" value="${esc(p.phone)}">
+        <input name="email" type="email" required placeholder="ایمیل ورود فعلی" dir="ltr" value="${esc(p.email)}">
+      </div>
+      <p class="sec">سازمان</p>
+      <div class="row-2">
+        <input name="company_name" placeholder="نام شرکت / فروشگاه" value="${esc(p.company_name)}">
+        <input name="group_name" placeholder="نام گروه" value="${esc(p.group_name)}">
+      </div>
+      <p class="sec">دسترسی</p>
+      <div class="gen">
+        <input name="username" required placeholder="نام کاربری" dir="ltr" value="${esc(p.username)}">
+        <button type="button" class="btn" id="u">ساخت کاربری</button>
+      </div>
+      ${
+        creating
+          ? `<div class="gen">
+        <input name="password" required minlength="8" placeholder="رمز پیش‌فرض" dir="ltr">
+        <button type="button" class="btn" id="g">ساخت رمز</button>
+      </div>`
+          : `<p class="muted">رمز از پنل عضو عوض می‌شود. اینجا رمز دیده نمی‌شود.</p>`
+      }
+      <select name="role">
+        <option value="member" ${p.role === "member" ? "selected" : ""}>عضو</option>
+        <option value="admin" ${p.role === "admin" ? "selected" : ""}>مدیر</option>
+      </select>
+      <button class="btn" type="submit">${creating ? "ساخت عضو" : "ذخیره"}</button>
+      <p id="m" class="muted"></p>
+      <div id="cred"></div>
+      <p><a href="#/members">بازگشت به فهرست</a></p>
+    </form>`,
+  });
+  const f = qs("#mf");
+  const uBtn = qs("#u");
+  const gBtn = qs("#g");
+  if (uBtn) {
+    uBtn.onclick = () => {
+      const phone = f.phone.value.trim();
+      f.username.value = phone || f.email.value.trim().split("@")[0];
+    };
+  }
+  if (gBtn) {
+    gBtn.onclick = () => {
+      f.password.value = genPass();
+    };
+    f.password.value = genPass();
+  }
+  if (!f.username.value) {
+    f.username.value = (p.phone || p.email || "").split("@")[0];
+  }
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(f);
+    const row = {
+      display_name: String(fd.get("display_name")).trim(),
+      national_id: String(fd.get("national_id")).trim(),
+      phone: String(fd.get("phone")).trim(),
+      email: String(fd.get("email")).trim(),
+      company_name: String(fd.get("company_name") || "").trim(),
+      group_name: String(fd.get("group_name") || "").trim(),
+      username: String(fd.get("username")).trim(),
+      role: String(fd.get("role") || "member"),
+    };
+    qs("#m").textContent = "در حال ذخیره…";
+    try {
+      if (creating) {
+        const password = String(fd.get("password"));
+        const { data, error } = await petavuData.auth.createMemberAccount({
+          email: row.email,
+          password,
+          meta: { must_change_password: true, phone: row.phone, username: row.username, full_name: row.display_name },
+        });
+        if (error || !data?.user) throw error || new Error("حساب ساخته نشد.");
+        const { error: pe } = await petavuData.profile.upsert({
+          id: data.user.id,
+          ...row,
+          must_change_password: true,
+        });
+        if (pe) throw pe;
+        if (row.company_name) {
+          await petavuData.businesses.create({
+            owner_id: data.user.id,
+            name: row.company_name,
+            slug: (row.username || data.user.id.slice(0, 8)).toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+            kind: "petshop",
+            published: false,
+          });
+        }
+        qs("#m").className = "ok";
+        qs("#m").textContent = "عضو ساخته شد. این رمز را یک‌بار به عضو بدهید.";
+        qs("#cred").innerHTML = `<div class="cred"><b>یک‌بار نمایش</b><p dir="ltr">user: ${esc(row.email)}</p><p dir="ltr">pass: ${esc(password)}</p></div>`;
+      } else {
+        const { error } = await petavuData.profile.update(id, row);
+        if (error) throw error;
+        qs("#m").className = "ok";
+        qs("#m").textContent = "ذخیره شد.";
+      }
+    } catch (err) {
+      qs("#m").className = "err";
+      qs("#m").textContent = err.message || String(err);
+    }
+  };
 }
 
 window.addEventListener("hashchange", render);
