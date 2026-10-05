@@ -1,0 +1,83 @@
+@font-face {
+  font-family: Vazirmatn;
+  src: url("assets/vazirmatn-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+:root {
+  --brand: #0e7c86;
+  --brand-2: #33a7b0;
+  --gold: #f5a623;
+  --bg: #03201f;
+  --ink: #eaf6f7;
+  --muted: #9ad3d8;
+  --card: #053134;
+  --danger: #e85d4c;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  font-family: Vazirmatn, Tahoma, sans-serif;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(14, 124, 134, .35), transparent 60%),
+    radial-gradient(900px 500px at 0% 100%, rgba(245, 166, 35, .1), transparent 55%),
+    var(--bg);
+  color: var(--ink);
+}
+a { color: var(--brand-2); text-decoration: none; }
+header, main, footer { width: min(980px, calc(100% - 32px)); margin-inline: auto; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 0;
+}
+.brand { font-weight: 800; letter-spacing: .08em; color: var(--gold); }
+nav { display: flex; gap: 14px; flex-wrap: wrap; font-size: .95rem; }
+.pill {
+  display: inline-block;
+  border: 1px solid rgba(154, 211, 216, .35);
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--brand-2);
+  font-size: .8rem;
+}
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 8px 0 12px; }
+.lead { color: var(--muted); line-height: 1.9; max-width: 40rem; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 28px 0;
+}
+.card {
+  background: var(--card);
+  border: 1px solid rgba(154, 211, 216, .18);
+  border-radius: 16px;
+  padding: 18px;
+}
+.card h3 { margin: 0 0 8px; }
+.muted { color: var(--muted); font-size: .9rem; }
+form { display: grid; gap: 10px; max-width: 420px; }
+input, textarea, select, button {
+  font: inherit;
+  border-radius: 10px;
+  border: 1px solid rgba(154, 211, 216, .3);
+  padding: 10px 12px;
+  background: #03201f;
+  color: var(--ink);
+}
+button, .btn {
+  background: var(--brand);
+  border: 0;
+  color: white;
+  cursor: pointer;
+  text-align: center;
+}
+button.ghost { background: transparent; border: 1px solid var(--brand-2); color: var(--brand-2); }
+.err { color: var(--danger); }
+.ok { color: #8ee0a8; }
+footer { padding: 40px 0 28px; color: rgba(234, 246, 247, .45); font-size: .8rem; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: right; padding: 8px 6px; border-bottom: 1px solid rgba(154,211,216,.15); }
