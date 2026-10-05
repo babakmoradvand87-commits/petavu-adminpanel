@@ -1,15 +1,31 @@
 async function render() {
-  const path = location.hash.replace("#", "") || "/";
+  const path = (location.hash.replace(/^#/, "") || "/");
   if (path === "/logout") {
     await petavuData.auth.signOut();
     location.hash = "#/login";
     return;
   }
-  const user = await petavuData.auth.user();
+  let user = null;
+  try {
+    user = await petavuData.auth.user();
+  } catch (e) {
+    viewLogin("خواندن نشست ناموفق بود. دوباره وارد شوید.");
+    return;
+  }
   if (!user || path === "/login") return viewLogin();
-  const me = await petavuData.profile.me();
+  let me = null;
+  try {
+    me = await petavuData.profile.me();
+  } catch (e) {
+    petavuShell("خطا", `<a href="#/logout">خروج</a>`, `<p class="err">${e.message || e}</p>`);
+    return;
+  }
   if (!me || !["admin", "shop_admin"].includes(me.role)) {
-    petavuShell("دسترسی نیست", `<a href="#/logout">خروج</a>`, `<p>این سطح فقط برای مدیر پلتفرم است.</p>`);
+    petavuShell(
+      "دسترسی نیست",
+      `<a href="#/logout">خروج</a>`,
+      `<p>این حساب عضو است، نه مدیر. برای کنترل پلتفرم با <b dir="ltr">admin@petavu.ir</b> وارد شوید.</p>`
+    );
     return;
   }
   const { data } = await petavuData.businesses.all();
@@ -35,25 +51,33 @@ async function render() {
     };
   });
 }
-function viewLogin() {
+function viewLogin(pre) {
   petavuShell(
     "ورود مدیر",
     `<a href="${PETAVU_ENV.origins.website}">سایت</a>`,
-    `<form id="f">
-      <input name="email" type="email" required dir="ltr" placeholder="ایمیل">
-      <input name="password" type="password" required placeholder="رمز">
-      <button class="btn">ورود</button><p id="m"></p>
+    `<p class="muted">فقط حساب مدیر پلتفرم. آدرس: <span dir="ltr">adminpanel.petavu.ir</span></p>
+    <form id="f">
+      <input name="email" type="email" required dir="ltr" placeholder="email" autocomplete="username">
+      <input name="password" type="password" required placeholder="رمز" autocomplete="current-password">
+      <button class="btn" type="submit">ورود</button>
+      <p id="m" class="${pre ? "err" : "muted"}">${pre || ""}</p>
     </form>`
   );
   qs("#f").onsubmit = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const { error } = await petavuData.auth.signIn(String(fd.get("email")), String(fd.get("password")));
-    if (error) qs("#m").innerHTML = `<span class="err">${error.message}</span>`;
-    else {
-      location.hash = "#/";
-      render();
+    const btn = e.target.querySelector("button");
+    btn.disabled = true;
+    qs("#m").textContent = "در حال ورود…";
+    const { data, error } = await petavuData.auth.signIn(String(fd.get("email")).trim(), String(fd.get("password")));
+    if (error || !data?.session) {
+      btn.disabled = false;
+      qs("#m").className = "err";
+      qs("#m").textContent = error?.message || "ورود انجام نشد.";
+      return;
     }
+    location.hash = "#/app";
+    render();
   };
 }
 window.addEventListener("hashchange", render);

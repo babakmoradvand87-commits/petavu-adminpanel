@@ -4,12 +4,17 @@
  */
 (function (global) {
   const env = global.PETAVU_ENV;
-  const sb = global.supabase.createClient(env.supabaseUrl, env.supabaseAnonKey);
+  const sb = global.supabase.createClient(env.supabaseUrl, env.supabaseAnonKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: "petavu-v1" },
+  });
 
   global.petavuData = {
     backend: "supabase",
     auth: {
-      user: () => sb.auth.getUser().then((r) => r.data.user || null),
+      user: async () => {
+        const { data } = await sb.auth.getSession();
+        return data.session?.user || null;
+      },
       signIn: (email, password) => sb.auth.signInWithPassword({ email, password }),
       signUp: (email, password) => sb.auth.signUp({ email, password }),
       signOut: () => sb.auth.signOut(),
