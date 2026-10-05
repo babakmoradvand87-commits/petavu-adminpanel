@@ -147,6 +147,21 @@ function viewPublish(list) {
   });
 }
 
+async function saveIdentity(id, row) {
+  const full = { id, ...row };
+  let { error } = await petavuData.profile.upsert(full);
+  if (error && /schema cache|column/i.test(error.message || "")) {
+    const { error: e2 } = await petavuData.profile.upsert({
+      id,
+      display_name: row.display_name,
+      email: row.email,
+      role: row.role,
+    });
+    return e2 || new Error("ستون هویت روی دیتابیس نیست. مهاجرت 0002 باید اجرا شود.");
+  }
+  return error;
+}
+
 function genPass() {
   const a = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
   const b = crypto.getRandomValues(new Uint8Array(12));
@@ -332,11 +347,7 @@ async function viewMemberForm(id) {
           meta: { must_change_password: true, phone: row.phone, username: row.username, full_name: row.display_name },
         });
         if (error || !data?.user) throw error || new Error("حساب ساخته نشد.");
-        const { error: pe } = await petavuData.profile.upsert({
-          id: data.user.id,
-          ...row,
-          must_change_password: true,
-        });
+        const pe = await saveIdentity(data.user.id, { ...row, must_change_password: true });
         if (pe) throw pe;
         if (row.company_name) {
           await petavuData.businesses.create({
@@ -351,7 +362,7 @@ async function viewMemberForm(id) {
         qs("#m").textContent = "عضو ساخته شد. این رمز را یک‌بار به عضو بدهید.";
         qs("#cred").innerHTML = `<div class="cred"><b>یک‌بار نمایش</b><p dir="ltr">user: ${esc(row.email)}</p><p dir="ltr">pass: ${esc(password)}</p></div>`;
       } else {
-        const { error } = await petavuData.profile.update(id, row);
+        const error = await saveIdentity(id, row);
         if (error) throw error;
         qs("#m").className = "ok";
         qs("#m").textContent = "ذخیره شد.";
