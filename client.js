@@ -27,6 +27,7 @@
         if (error) throw error;
         return data;
       },
+      all: () => sb.from("profiles").select("id,email,display_name,role,created_at").order("created_at", { ascending: false }),
     },
     businesses: {
       published: () => sb.from("businesses").select("*").eq("published", true).order("created_at", { ascending: false }),

@@ -1,5 +1,6 @@
 window.petavuGate = function petavuGate(opts) {
   document.body.classList.add("is-gate");
+  document.body.classList.remove("is-app");
   const lock = opts.lock
     ? `<span class="gate-lock" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2"/></svg></span>`
     : "";
@@ -16,7 +17,7 @@ window.petavuGate = function petavuGate(opts) {
         </div>
       </aside>
       <figure class="gate-visual">
-        <img src="${opts.image}" alt="" width="1920" height="1080">
+        <img src="${opts.image}" alt="">
         <figcaption>
           <strong>${opts.captionTitle}</strong>
           <span>${opts.caption}</span>
@@ -25,19 +26,41 @@ window.petavuGate = function petavuGate(opts) {
     </section>`;
 };
 
-window.petavuShell = function petavuShell(title, navHtml, body) {
+window.petavuChrome = function petavuChrome(opts) {
   document.body.classList.remove("is-gate");
+  document.body.classList.add("is-app");
+  const items = (opts.items || [])
+    .map((i) => `<a class="${i.id === opts.active ? "on" : ""} ${i.out ? "out" : ""}" href="${i.href}">${i.label}</a>`)
+    .join("");
   document.getElementById("app").innerHTML = `
-    <header class="top"><div class="wrap top-inner">
-      <div class="mark">PETAVU</div>
-      <nav class="nav">${navHtml}</nav>
-    </div></header>
-    <main class="wrap" style="padding:48px 0 80px">
-      <p class="eyebrow">نسخهٔ ۱</p>
-      <h1 class="display" style="font-size:clamp(1.6rem,4vw,2.4rem)">${title}</h1>
-      ${body}
-    </main>
-    <footer class="footer"><div class="wrap">${location.hostname}</div></footer>`;
+    <div class="shell">
+      <aside class="side">
+        <div class="side-brand">پتاوو <span>|</span> PETAVU</div>
+        <nav>${items}</nav>
+      </aside>
+      <div class="main">
+        <header class="page-hero">
+          <img src="${opts.still}" alt="">
+          <div class="page-hero-copy">
+            <p class="k">${opts.kicker || ""}</p>
+            <h1>${opts.title}</h1>
+            ${opts.lead ? `<p class="lead">${opts.lead}</p>` : ""}
+          </div>
+        </header>
+        <section class="page-body">${opts.body}</section>
+      </div>
+    </div>`;
+};
+
+window.petavuShell = function petavuShell(title, navHtml, body) {
+  petavuChrome({
+    items: [{ id: "x", href: "#/home", label: "خانه" }],
+    active: "x",
+    still: "assets/still-home.jpg",
+    kicker: "پتاوو",
+    title,
+    body: `${navHtml}${body}`,
+  });
 };
 window.money = (n) => new Intl.NumberFormat("fa-IR").format(n) + " ریال";
 window.qs = (s, r = document) => r.querySelector(s);
