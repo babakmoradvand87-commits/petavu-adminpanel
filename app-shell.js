@@ -1,4 +1,32 @@
+window.petavuGate = function petavuGate(opts) {
+  document.body.classList.add("is-gate");
+  const lock = opts.lock
+    ? `<span class="gate-lock" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2"/></svg></span>`
+    : "";
+  document.getElementById("app").innerHTML = `
+    <section class="gate">
+      <aside class="gate-form">
+        <div class="gate-form-inner">
+          <b class="gate-mark">PETAVU</b>
+          <p class="gate-k">${lock}${opts.kicker}</p>
+          <h1>${opts.title}</h1>
+          <p class="gate-lead">${opts.lead}</p>
+          ${opts.form}
+          ${opts.extra || ""}
+        </div>
+      </aside>
+      <figure class="gate-visual">
+        <img src="${opts.image}" alt="" width="1920" height="1080">
+        <figcaption>
+          <strong>${opts.captionTitle}</strong>
+          <span>${opts.caption}</span>
+        </figcaption>
+      </figure>
+    </section>`;
+};
+
 window.petavuShell = function petavuShell(title, navHtml, body) {
+  document.body.classList.remove("is-gate");
   document.getElementById("app").innerHTML = `
     <header class="top"><div class="wrap top-inner">
       <div class="mark">PETAVU</div>
