@@ -68,11 +68,11 @@ function viewLogin(pre) {
   petavuGate({
     lock: true,
     image: "assets/login.jpg",
-    kicker: "کنترل شبکه",
-    title: "ورود مدیران",
-    lead: "جدا از پنل اعضا. فقط با نشانی مستقیم.",
-    captionTitle: "سامانهٔ کنترل پتاوو",
-    caption: "انتشار و عضویت صنعت پت و اسب — فرمان در دست شما.",
+    kicker: "پتاوو",
+    title: "ورود به ادارهٔ شبکه",
+    lead: "این دروازه فقط برای کسانی است که مسئولیت انتشار و اعتبار صنف را دارند.",
+    captionTitle: "ادارهٔ یکپارچهٔ صنعت",
+    caption: "عضویت، انتشار و امنیت شبکهٔ پت و اسب از اینجا هدایت می‌شود.",
     form: `<form id="f">
       <label>ایمیل</label>
       <input name="email" type="email" required dir="ltr" placeholder="admin@petavu.ir" autocomplete="username">
@@ -105,9 +105,9 @@ function viewHome(me, list) {
   const pending = list.filter((b) => !b.published).length;
   petavuChrome({
     items, active: "home", still: "assets/still-home.jpg",
-    kicker: "کنترل شبکه",
-    title: "ادارهٔ پتاوو",
-    lead: "انتشار، کسب‌وکارها و اعضا از همین‌جا.",
+    kicker: "ادارهٔ شبکه",
+    title: "فرمان صنعت در دست شماست",
+    lead: "هر واحد که به شبکه می‌آید، از اینجا دیده، سنجیده و منتشر می‌شود.",
     body: `<div class="grid">
       <article class="card"><h3>${list.length}</h3><p class="muted">کسب‌وکار ثبت‌شده</p></article>
       <article class="card"><h3>${pending}</h3><p class="muted">در انتظار انتشار</p></article>
@@ -121,9 +121,9 @@ function viewBiz(list) {
     .join("");
   petavuChrome({
     items, active: "biz", still: "assets/still-biz.jpg",
-    kicker: "کسب‌وکارها",
-    title: "صنف در شبکه",
-    lead: "همهٔ واحدهایی که برای دیده شدن آمده‌اند.",
+    kicker: "صنف",
+    title: "واحدهای حاضر در شبکه",
+    lead: "پت‌شاپ، کلینیک، اصطبل، درمان و تأمین — هر کدام با جای خود.",
     body: `<table><thead><tr><th>نام</th><th>صنف</th><th>شهر</th><th>وضعیت</th></tr></thead><tbody>${rows || ""}</tbody></table>`,
   });
 }
@@ -140,9 +140,9 @@ function viewPublish(list) {
     .join("");
   petavuChrome({
     items, active: "publish", still: "assets/still-publish.jpg",
-    kicker: "انتشار",
-    title: "ویترین عمومی",
-    lead: "آنچه تأیید شود روی سایت دیده می‌شود.",
+    kicker: "ویترین",
+    title: "آنچه صنعت باید ببیند",
+    lead: "اعتبار عمومی شبکه به دقت همین تأییدهاست.",
     body: `<table><thead><tr><th>کسب‌وکار</th><th>شهر</th><th>وضعیت</th><th></th></tr></thead><tbody>${rows}</tbody></table>`,
   });
   document.querySelectorAll("button[data-id]").forEach((btn) => {
@@ -206,10 +206,10 @@ async function viewMembers() {
   const body = err
     ? `<p class="err">${esc(err)}</p>`
     : `<div class="toolbar">
-        <input type="search" id="q" placeholder="جستجو: نام، شرکت، فروشگاه، گروه، موبایل">
-        <a class="btn" href="#/members-new">عضو جدید</a>
+        <input type="search" id="q" placeholder="نام، شرکت، گروه">
+        <a class="btn" href="#/members-new">ورود عضو به شبکه</a>
       </div>
-      <p class="muted">ورود فعلی با ایمیل و رمز است. موبایل برای فعال‌سازی بعدی پیامک ذخیره می‌شود.</p>
+      <p class="muted">هر عضو با هویت کامل در شبکه می‌ایستد؛ شرکت، گروه و مسیر ارتباط در یک پرونده.</p>
       <table>
         <thead><tr><th>نام</th><th>شرکت / فروشگاه</th><th>گروه</th><th>موبایل</th><th>کاربری</th><th></th></tr></thead>
         <tbody id="tb">${memberRows(all)}</tbody>
@@ -217,8 +217,8 @@ async function viewMembers() {
   petavuChrome({
     items, active: "members", still: "assets/still-members.jpg",
     kicker: "اعضا",
-    title: "دفتر هویت شبکه",
-    lead: "ساخت عضو با هویت کامل. رمز پیش‌فرض را عضو در اولین ورود عوض می‌کند.",
+    title: "کسانی که صنعت را می‌سازند",
+    lead: "هویت، جایگاه و دسترسی هر عضو اینجا ثبت می‌شود.",
     body,
   });
   const q = qs("#q");
@@ -271,9 +271,9 @@ async function viewMemberForm(id) {
   const creating = !id;
   petavuChrome({
     items, active: "members", still: "assets/still-members.jpg",
-    kicker: creating ? "عضو جدید" : "ویرایش عضو",
-    title: creating ? "ثبت هویت و دسترسی" : p.display_name || "ویرایش",
-    lead: "هویت اجباری است. کاربری و رمز ساخته می‌شوند. بعداً ورود با موبایل و پیامک روی همین پرونده فعال می‌شود.",
+    kicker: creating ? "عضو جدید" : "پروندهٔ عضو",
+    title: creating ? "ورود یک نام به صنعت" : p.display_name || "پروندهٔ عضو",
+    lead: "هویت حقوقی و جایگاه صنفی، پیش از هر دسترسی.",
     body: `<form class="stack" id="mf" style="max-width:640px">
       <p class="sec">هویت</p>
       <div class="row-2">
@@ -281,7 +281,7 @@ async function viewMemberForm(id) {
         <input name="national_id" required placeholder="کد ملی" value="${esc(p.national_id)}">
       </div>
       <div class="row-2">
-        <input name="phone" required placeholder="موبایل — کلید ورود پیامک" dir="ltr" value="${esc(p.phone)}">
+            <input name="phone" required placeholder="موبایل" dir="ltr" value="${esc(p.phone)}">
         <input name="email" type="email" required placeholder="ایمیل ورود فعلی" dir="ltr" value="${esc(p.email)}">
       </div>
       <p class="sec">سازمان</p>
@@ -300,7 +300,7 @@ async function viewMemberForm(id) {
         <input name="password" required minlength="8" placeholder="رمز پیش‌فرض" dir="ltr">
         <button type="button" class="btn" id="g">ساخت رمز</button>
       </div>`
-          : `<p class="muted">رمز از پنل عضو عوض می‌شود. اینجا رمز دیده نمی‌شود.</p>`
+          : `<p class="muted">رمز فقط نزد عضو است و از میز کار خودش تازه می‌شود.</p>`
       }
       <select name="role">
         <option value="member" ${p.role === "member" ? "selected" : ""}>عضو</option>
@@ -365,7 +365,7 @@ async function viewMemberForm(id) {
           });
         }
         qs("#m").className = "ok";
-        qs("#m").textContent = "عضو ساخته شد. این رمز را یک‌بار به عضو بدهید.";
+        qs("#m").textContent = "عضو در شبکه نشست. این دسترسی را یک‌بار به او بسپارید.";
         qs("#cred").innerHTML = `<div class="cred"><b>یک‌بار نمایش</b><p dir="ltr">user: ${esc(row.email)}</p><p dir="ltr">pass: ${esc(password)}</p></div>`;
       } else {
         const error = await saveIdentity(id, row);
@@ -381,14 +381,14 @@ async function viewMemberForm(id) {
 }
 
 const SMS_VENDORS = [
-  { id: "kavenegar", label: "کاوه نگار", hint: "از پنل: کلید API و شماره خط." },
-  { id: "melipayamak", label: "ملی پیامک", hint: "از پنل: نام کاربری، رمز، شماره خط. برای رمز یک‌بارمصرف کد پترن." },
-  { id: "smsir", label: "SMS.ir", hint: "از پنل: کلید API و شماره خط. قالب تأیید اختیاری است." },
-  { id: "farazsms", label: "فراز اس‌ام‌اس", hint: "از پنل: نام کاربری، رمز، خط، کد پترن." },
-  { id: "ghasedak", label: "قاصدک", hint: "از پنل: کلید API و شماره خط." },
-  { id: "magfa", label: "مگفا", hint: "از پنل: نام کاربری، رمز، خط و آدرس وب‌سرویس." },
-  { id: "payamresan", label: "پیام‌رسان", hint: "از پنل: نام کاربری، رمز و شماره خط." },
-  { id: "custom", label: "سایر سامانه‌ها", hint: "هر پنل دیگری: آدرس وب‌سرویس و همان چیزهایی که پنل به شما داده." },
+  { id: "kavenegar", label: "کاوه نگار", hint: "ارتباط مستقیم با خط اختصاصی کاوه‌نگار." },
+  { id: "melipayamak", label: "ملی پیامک", hint: "ارسال الگویی و خط اختصاصی ملی‌پیامک." },
+  { id: "smsir", label: "SMS.ir", hint: "خط و قالب تأیید SMS.ir." },
+  { id: "farazsms", label: "فراز اس‌ام‌اس", hint: "خط و الگوی فراز برای پیام‌های حساس." },
+  { id: "ghasedak", label: "قاصدک", hint: "ارسال سریع روی خط قاصدک." },
+  { id: "magfa", label: "مگفا", hint: "وب‌سرویس سازمانی مگفا." },
+  { id: "payamresan", label: "پیام‌رسان", hint: "خط اختصاصی پیام‌رسان." },
+  { id: "custom", label: "سامانهٔ اختصاصی", hint: "هر خط سازمانی دیگر، با مشخصات همان سامانه." },
 ];
 const SMS_FIELDS = {
   kavenegar: ["api_key", "sender"],
@@ -401,19 +401,19 @@ const SMS_FIELDS = {
   custom: ["api_url", "username", "password", "api_key", "sender", "pattern_id"],
 };
 const FIELD_LABEL = {
-  api_key: "کلید API",
-  username: "نام کاربری پنل",
-  password: "رمز پنل",
-  sender: "شماره خط ارسال",
-  pattern_id: "کد پترن / قالب (برای رمز یک‌بارمصرف)",
-  api_url: "آدرس وب‌سرویس",
+  api_key: "کلید اختصاصی",
+  username: "نام کاربری سامانه",
+  password: "رمز سامانه",
+  sender: "شمارهٔ خط",
+  pattern_id: "شناسهٔ الگو",
+  api_url: "نشانی وب‌سرویس",
 };
 const SMS_USES = [
-  { id: "otp_login", title: "ورود با موبایل", desc: "کد تأیید به شماره عضو" },
-  { id: "member_welcome", title: "عضو جدید", desc: "ارسال کاربری و رمز ساخته‌شده" },
-  { id: "password_reset", title: "بازیابی رمز", desc: "کد یا لینک بازیابی" },
-  { id: "shop_notify", title: "فروشگاه", desc: "اطلاع سفارش و موجودی" },
-  { id: "admin_alert", title: "هشدار مدیریت", desc: "پیام به مدیران شبکه" },
+  { id: "otp_login", title: "ورود اعضا", desc: "تأیید حضور با پیام به موبایل." },
+  { id: "member_welcome", title: "خوشامد عضو", desc: "آغاز همکاری با یک پیام رسمی." },
+  { id: "password_reset", title: "بازیابی دسترسی", desc: "بازگشت امن به میز کار." },
+  { id: "shop_notify", title: "بازار صنف", desc: "خبر سفارش و جریان کالا." },
+  { id: "admin_alert", title: "ادارهٔ شبکه", desc: "هشدار برای تصمیم‌های فوری." },
 ];
 
 async function viewSms() {
@@ -430,21 +430,20 @@ async function viewSms() {
           </tr>`
         )
         .join("")
-    : `<tr><td colspan="5" class="muted">هنوز سامانه‌ای نیست. از «سامانهٔ جدید» اضافه کنید.</td></tr>`;
+    : `<tr><td colspan="5" class="muted">هنوز خطی به شبکه وصل نشده است.</td></tr>`;
   petavuChrome({
     items, active: "sms", still: "assets/still-home.jpg",
     kicker: "پیامک",
-    title: "سامانه‌های پیامک",
-    lead: "همان چیزهایی را وارد کنید که پنل ایرانی به شما می‌دهد. بعد مشخص کنید هر بخش سایت از کدام سامانه بفرستد.",
+    title: "صدای شبکه تا موبایل صنف",
+    lead: "هر خط، یک مسیر اعتماد. چند سامانه می‌توانند کنار هم کار کنند.",
     body: `<div class="toolbar">
-        <a class="btn" href="#/sms-new">سامانهٔ جدید</a>
-        <a class="btn" href="#/sms-routes">کدام بخش از کدام پنل</a>
+        <a class="btn" href="#/sms-new">خط جدید</a>
+        <a class="btn" href="#/sms-routes">توزیع پیام</a>
       </div>
       <table>
         <thead><tr><th>نام</th><th>سامانه</th><th>وضعیت</th><th>خط</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
-      </table>
-      <p class="muted">چند سامانه هم‌زمان مجاز است. ارسال واقعی وقتی موبایل فعال شود از همین تنظیمات خوانده می‌شود.</p>`,
+      </table>`,
   });
 }
 
@@ -466,18 +465,18 @@ async function viewSmsForm(id) {
   const creating = !id;
   petavuChrome({
     items, active: "sms", still: "assets/still-home.jpg",
-    kicker: creating ? "سامانهٔ جدید" : "ویرایش سامانه",
-    title: creating ? "افزودن پنل پیامک" : g.name || "ویرایش",
-    lead: "نوع سامانه را انتخاب کنید. فقط همان فیلدهایی که پنل‌تان داده پر شود.",
+    kicker: creating ? "خط جدید" : "مشخصات خط",
+    title: creating ? "وصل کردن یک سامانه" : g.name || "مشخصات خط",
+    lead: "سامانه را برگزینید و مشخصات همان خط را بنویسید.",
     body: `<form class="stack" id="sf" style="max-width:640px">
-      <p class="sec">شناسه</p>
-      <input name="name" required placeholder="یک نام ساده — مثلاً کاوه‌نگار اصلی" value="${esc(g.name)}">
+      <p class="sec">نام در شبکه</p>
+      <input name="name" required placeholder="مثلاً خط اصلی صنف" value="${esc(g.name)}">
       <select name="vendor" id="vendor">${SMS_VENDORS.map((v) => `<option value="${v.id}" ${v.id === g.vendor ? "selected" : ""}>${v.label}</option>`).join("")}</select>
       <p class="muted" id="hint"></p>
-      <p class="sec">آنچه پنل در اختیارتان گذاشته</p>
+      <p class="sec">مشخصات سامانه</p>
       <div id="fields"></div>
-      <label class="muted"><input type="checkbox" name="enabled" ${g.enabled ? "checked" : ""}> این سامانه روشن باشد</label>
-      <textarea name="notes" placeholder="یادداشت داخلی — اختیاری">${esc(g.notes || "")}</textarea>
+      <label class="muted"><input type="checkbox" name="enabled" ${g.enabled ? "checked" : ""}> این خط فعال است</label>
+      <textarea name="notes" placeholder="یادداشت برای مدیران">${esc(g.notes || "")}</textarea>
       <button class="btn" type="submit">ذخیره</button>
       ${creating ? "" : `<button class="btn" type="button" id="del">حذف</button>`}
       <p id="m" class="muted"></p>
@@ -519,7 +518,7 @@ async function viewSmsForm(id) {
     };
     await petavuData.sms.put(row);
     qs("#m").className = "ok";
-    qs("#m").textContent = "ذخیره شد. از «کدام بخش از کدام پنل» مسیر ارسال را مشخص کنید.";
+    qs("#m").textContent = "خط در شبکه نشست.";
   };
   const del = qs("#del");
   if (del) {
@@ -535,9 +534,9 @@ async function viewSmsRoutes() {
   const opts = `<option value="">— انتخاب سامانه —</option>` + list.filter((g) => g.enabled).map((g) => `<option value="${g.id}">${esc(g.name)}</option>`).join("");
   petavuChrome({
     items, active: "sms", still: "assets/still-home.jpg",
-    kicker: "مسیر ارسال",
-    title: "هر بخش از کدام پنل",
-    lead: "اگر چند سامانه دارید، برای هر کار یکی را انتخاب کنید. خالی یعنی هنوز پیامک نرود.",
+    kicker: "توزیع پیام",
+    title: "هر پیام، از مسیر خودش",
+    lead: "ورود، خوشامد، بازیابی، بازار و اداره — هر کدام می‌تواند خط جدا داشته باشد.",
     body: `<form class="stack" id="rf" style="max-width:640px">
       ${SMS_USES.map(
         (u) => `<div class="card">
@@ -548,7 +547,7 @@ async function viewSmsRoutes() {
       ).join("")}
       <button class="btn" type="submit">ذخیرهٔ مسیرها</button>
       <p id="m" class="muted"></p>
-      <p><a href="#/sms">بازگشت به سامانه‌ها</a></p>
+      <p><a href="#/sms">بازگشت به خطوط</a></p>
     </form>`,
   });
   const f = qs("#rf");
@@ -563,7 +562,7 @@ async function viewSmsRoutes() {
     });
     await petavuData.sms.setRoutes(obj);
     qs("#m").className = "ok";
-    qs("#m").textContent = "مسیرها ذخیره شد.";
+    qs("#m").textContent = "توزیع پیام ثبت شد.";
   };
 }
 
