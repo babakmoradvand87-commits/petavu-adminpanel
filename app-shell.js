@@ -11,7 +11,7 @@ window.petavuGate = function petavuGate(opts) {
           <b class="gate-mark">PETAVU</b>
           <p class="gate-k">${lock}${opts.kicker}</p>
           <h1>${opts.title}</h1>
-          <p class="gate-lead">${opts.lead}</p>
+          ${opts.lead ? `<p class="gate-lead">${opts.lead}</p>` : ""}
           ${opts.form}
           ${opts.extra || ""}
         </div>

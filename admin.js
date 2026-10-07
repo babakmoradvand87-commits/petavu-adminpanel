@@ -68,17 +68,17 @@ function viewLogin(pre) {
   petavuGate({
     lock: true,
     image: "assets/login.jpg",
-    kicker: "پتاوو",
-    title: "ورود به ادارهٔ شبکه",
-    lead: "این دروازه فقط برای کسانی است که مسئولیت انتشار و اعتبار صنف را دارند.",
+    kicker: "دروازه مدیر سیستم",
+    title: "احراز هویت سطح مدیریت",
+    lead: "",
     captionTitle: "ادارهٔ یکپارچهٔ صنعت",
     caption: "عضویت، انتشار و امنیت شبکهٔ پت و اسب از اینجا هدایت می‌شود.",
     form: `<form id="f">
-      <label>ایمیل</label>
-      <input name="email" type="email" required dir="ltr" placeholder="admin@petavu.ir" autocomplete="username">
+      <label>نام کاربری</label>
+      <input name="email" type="email" required dir="ltr" placeholder="نام کاربری" autocomplete="username">
       <label>رمز عبور</label>
       <input name="password" type="password" required placeholder="رمز عبور" autocomplete="current-password">
-      <button class="btn" type="submit">ورود</button>
+      <button class="btn" type="submit">تأیید هویت و ورود</button>
       <p id="m" class="${pre ? "err" : "muted"}">${pre || ""}</p>
     </form>`,
     extra: `<p class="gate-extra"><a href="${O.website}">بازگشت به سایت</a></p>`,
